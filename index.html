@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>ScoreDinatoR</title>
+    <link rel="stylesheet" href="css/custom.min.css" type="text/css">
+    <script src="js/svg.min.js"></script>
+   <!-- <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script> -->
+</head>
+<body>
+    <header>
+        <div class="title">
+            <h1>ScoreDinatoR</h1>
+            <sub class="ver">v1.3.0</sub>
+        </div> 
+        <div class="spacer"></div>
+        <div class="form-element">
+            
+            <input id="stroke-width" value="2" name="stroke" type="range" size="8" min="1" max="8">
+        </div>
+        <div class="form-element">
+            <svg id="dark-mode" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2M12 4A8 8 0 0 1 20 12A8 8 0 0 1 12 20V4Z" /></svg>
+        </div>
+    </header>
+    <main>
+        <div id="score" class="score">
+            
+        </div>
+        <div id="mask"></div>
+        <div id="overlay" class="hidden">
+            <div class="first-line gap-filler"></div>
+            <div class="line player-overlay"></div>
+            <div class="line player-overlay"></div>
+            <div class="line player-overlay"></div>
+            <div class="line player-overlay"></div>
+            <div class="line player-overlay hidden"></div>
+            <div class="line player-overlay hidden"></div>
+            <div class="last-line gap-filler"></div>
+        </div>
+        <div id="countdown">
+            <div id="timeleft" class="hidden">3</div>
+        </div>
+        <div id="legend">
+            <div class="legend-element path-1">
+                <div id="player-1" class="player">1</div>
+                <input type="text" size="16" placeholder="player 1 name">
+            </div>
+            <div class="legend-element path-2">
+                <div id="player-2" class="player">2</div>
+                <input type="text" size="16" placeholder="player 2 name">
+            </div>
+            <div class="legend-element path-3">
+                <div id="player-3" class="player">3</div>
+                <input type="text" size="16" placeholder="player 3 name">
+            </div>
+            <div class="legend-element path-4">
+                <div id="player-4" class="player">4</div>
+                <input type="text" size="16" placeholder="player 4 name">
+            </div>
+            <div class="legend-element path-5 hidden">
+                <div id="player-5" class="player">5</div>
+                <input type="text" size="16" placeholder="player 5 name">
+            </div>
+            <div class="legend-element path-6 hidden">
+                <div id="player-6" class="player">6</div>
+                <input type="text" size="16" placeholder="player 6 name">
+            </div>
+        </div>
+    </main> 
+    <footer>
+        <div class="form-element">
+            <label for="players">Player•s</label>
+            <input id="players" value="4" name="players" type="number" size="4" min="1" max="6">
+        </div>
+        <div class="form-element">
+            <label for="split">Split</label>
+            <input type="checkbox" name="split" id="split" title="Activate split view">
+        </div>  
+        <div class="form-element">&nbsp;</div>
+        <div class="form-element no-gap">
+            <label for="duration">Duration</label>
+            <input id="duration" value="6" name="duration" type="number" size="4" min="3" max="12">
+        </div>
+        <div class="form-element">
+            <button id="pick-duration">?</button>
+        </div>
+        <div class="form-element no-gap">
+            <label for="steps">Steps</label>
+            <input id="max-steps" value="12" name="steps" type="number" size="4" min="3" max="24">
+        </div>
+        <div class="form-element">
+            <button id="pick-steps">?</button>
+        </div>
+        <div class="form-element">&nbsp;</div>
+        <div class="form-element">
+            <label for="sine">∿</label>
+            <input type="checkbox" name="sine" id="sine">
+        </div>
+        <div class="form-element">
+            <label for="square">⊓</label>
+            <input type="checkbox" name="square" id="square">
+        </div>
+        <div class="form-element">
+            <label for="triangle">⋀</label>
+            <input type="checkbox" name="triangle" id="triangle" checked>
+        </div>
+        <div class="form-element"><button id="draw-score">Draw</button></div>      
+        <div class="form-element"><button id="clear-score">Clear</button></div>
+        <div class="form-element">&nbsp;</div>
+        <div class="form-element"><button id="play-score" disabled>Play</button></div>
+        <div class="form-element"><button id="stop-score" disabled>Rewind</button></div>
+        
+    </footer>
+    <script src="js/scoredinator.min.js"></script>
+</body>
+</html>
