@@ -172,8 +172,9 @@ SVG.on(document, 'DOMContentLoaded', function() {
                 cLine = 2;
             } else {
                 // Exit
-                points = points + ' L'+ (pointer * step) + ' ' + (scoreH + startOffset - 72);
-                aPoints = aPoints + ' L'+ (pointer * step) + ' ' + (scoreH + startOffset - 72);
+                var exit_y = scoreH + startOffset - 72;
+                points = points + ' L'+ (pointer * step) + ' ' + exit_y;
+                aPoints = aPoints + ' L'+ (pointer * step) + ' ' + exit_y;
                 var exit_point = pointer;
                 break
             }            
@@ -189,7 +190,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
         // Draw a Triangle at the ending point
         // console.log("exit Point: "+exit_point);
         let ePoint = draw.polygon('0,0 16,0 8,16');
-        ePoint.move((exit_point * step - 8), (scoreH + startOffset - 72));
+        ePoint.move((exit_point * step - 8), exit_y);
         ePoint.attr('id', 'epoint-' + (player));
         
         let path = '';
@@ -203,21 +204,12 @@ SVG.on(document, 'DOMContentLoaded', function() {
         path.stroke({ linecap: 'round', linejoin: 'round' });     
         
         // Save newly designed path
-        let pP = [player-1, starting_point, points, aPoints, exit_point];
+        let pP = [player-1, starting_point, points, aPoints, exit_point, exit_y];
         pPaths.push(pP);
 
         // Add legend
         if (!legend) {
-            var text = []
-            for( let i=1; i <= steps + 1; i++) {
-                text[i] = draw.text(i-1);
-                text[i].amove( step*i, 20);
-            }
-
-            for( let i=0; i <= duration; i++) {
-                text[i] = draw.text(i+'’');
-                text[i].amove( step + timeStep*i, scoreH - 10);
-            }
+            drawLegend();
             legend = true;
         } 
         
@@ -250,7 +242,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
                 sPoint.move((pPaths[nPath][1] * step - 8 ), startOffset + 16);
                 sPoint.attr('id', 'spoint-' + (pPaths[nPath][0]+1));
                 let ePoint = draw.polygon('0,0 16,0 8,16');
-                ePoint.move((pPaths[nPath][4] * step - 8), (scoreH + startOffset - 72));
+                ePoint.move((pPaths[nPath][4] * step - 8), pPaths[nPath][5]);
                 ePoint.attr('id', 'epoint-' + (pPaths[nPath][0]+1));
                 let path = '';
                 if( splitView ) {
@@ -269,17 +261,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
             }, 80);
 
             // Add legend
-        
-            var text = []
-            for( let i=1; i <= steps + 1; i++) {
-                text[i] = draw.text(i-1);
-                text[i].amove( step*i, 20);
-            }
-
-            for( let i=0; i <= duration; i++) {
-                text[i] = draw.text(i+'’');
-                text[i].amove( step + timeStep*i, scoreH - 10);
-            }
+            drawLegend();
             legend = true;
         
 
@@ -367,6 +349,32 @@ SVG.on(document, 'DOMContentLoaded', function() {
         // document.getElementById('sine').disabled = status;
         // document.getElementById('square').disabled = status;
         // document.getElementById('triangle').disabled = status;
+    }
+
+    function drawLegend() {
+        var text = []
+        for( let i=1; i <= steps + 1; i++) {
+            text[i] = draw.text(i-1);
+            text[i].amove( step*i, 20);
+        }
+
+        for( let i=0; i <= duration; i++) {
+            text[i] = draw.text(i+'’');
+            text[i].amove( step + timeStep*i, scoreH - 10);
+        }
+    }
+
+    function scalePath(d, sx, sy) {
+        return d.replace(/([MLC])([^MLC]*)/g, function(match, cmd, coords) {
+            var nums = coords.match(/-?\d*\.?\d+/g);
+            if (!nums) return match;
+            var scaled = [];
+            for (var i = 0; i < nums.length; i += 2) {
+                scaled.push((parseFloat(nums[i]) * sx).toFixed(2));
+                scaled.push((parseFloat(nums[i + 1]) * sy).toFixed(2));
+            }
+            return cmd + ' ' + scaled.join(' ');
+        });
     }
 
     function getRandomInt(min, max) {
@@ -509,14 +517,44 @@ SVG.on(document, 'DOMContentLoaded', function() {
         // console.log("Split View: " + splitView);
     });
 
-    // Update SVG viewBox size on Window Resize
-    window.onresize = function() {
-        scoreW = document.getElementById('score').offsetWidth;
-        scoreH = document.getElementById('score').offsetHeight;
+    // Redraw the score on window resize
+    var resizeTimer = 0;
+    window.addEventListener("resize", function() {
+        clearTimeout( resizeTimer );
+        resizeTimer = setTimeout( function() {
+            var newW = document.getElementById('score').offsetWidth;
+            var newH = document.getElementById('score').offsetHeight;
+            if (!newW || !newH || !scoreW || !scoreH) return;
 
-        //Update SVG Viewbox
-        document.getElementById("score-svg").setAttribute("viewBox", "0 0 "+ scoreW + " " + scoreH);
-    }
+            var sx = newW / scoreW;
+            var sy = newH / scoreH;
+            scoreW = newW;
+            scoreH = newH;
+            document.getElementById("score-svg").setAttribute("viewBox", "0 0 " + scoreW + " " + scoreH);
+            step = scoreW / (steps + 2);
+            timeStep = (scoreW - 2 * step) / duration;
+
+            if (pPaths.length > 0) {
+                pPaths.forEach(function(p) {
+                    p[2] = scalePath(p[2], sx, sy);
+                    p[3] = scalePath(p[3], sx, sy);
+                    p[5] = p[5] * sy;
+                });
+                drawAlternate();
+            }
+
+            // Re-sync the mask animation to the new width, keeping its progress
+            if (animReady) {
+                var progress = mask.currentTime / a_duration;
+                mask.cancel();
+                initPlay();
+                mask.currentTime = progress * a_duration;
+                if (isPlaying) {
+                    mask.play();
+                }
+            }
+        }, 150);
+    });
 
     // Hide and show paths
     for (let i = 1; i <= 6; i++) {
