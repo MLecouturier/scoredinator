@@ -204,8 +204,9 @@ SVG.on(document, 'DOMContentLoaded', function() {
         path.stroke({ linecap: 'round', linejoin: 'round' });     
         
         // Save newly designed path
-        let pP = [player-1, starting_point, points, aPoints, exit_point, exit_y];
+        let pP = [player-1, starting_point, points, aPoints, exit_point, exit_y, startOffset + 32];
         pPaths.push(pP);
+        updateURL();
 
         // Add legend
         if (!legend) {
@@ -237,9 +238,8 @@ SVG.on(document, 'DOMContentLoaded', function() {
 
             var nPath = 0;
             redrawCounter = setInterval( function() {
-                let startOffset = (pPaths[nPath][0]+1) * 9;
                 let sPoint = draw.circle(16);
-                sPoint.move((pPaths[nPath][1] * step - 8 ), startOffset + 16);
+                sPoint.move((pPaths[nPath][1] * step - 8 ), pPaths[nPath][6] - 16);
                 sPoint.attr('id', 'spoint-' + (pPaths[nPath][0]+1));
                 let ePoint = draw.polygon('0,0 16,0 8,16');
                 ePoint.move((pPaths[nPath][4] * step - 8), pPaths[nPath][5]);
@@ -322,6 +322,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
         isPlaying = 0;
         legend = false;
         pPaths = [];
+        updateURL();
         document.getElementById('play-score').innerHTML = 'Play';
         document.getElementById('play-score').disabled = true;
         document.getElementById('draw-score').disabled = false;
@@ -362,6 +363,115 @@ SVG.on(document, 'DOMContentLoaded', function() {
             text[i] = draw.text(i+'’');
             text[i].amove( step + timeStep*i, scoreH - 10);
         }
+    }
+
+    function rescaleScore(newW, newH) {
+        if (!newW || !newH || !scoreW || !scoreH) return false;
+
+        var sx = newW / scoreW;
+        var sy = newH / scoreH;
+        scoreW = newW;
+        scoreH = newH;
+        document.getElementById("score-svg").setAttribute("viewBox", "0 0 " + scoreW + " " + scoreH);
+        step = scoreW / (steps + 2);
+        timeStep = (scoreW - 2 * step) / duration;
+
+        if (pPaths.length > 0) {
+            pPaths.forEach(function(p) {
+                p[2] = scalePath(p[2], sx, sy);
+                p[3] = scalePath(p[3], sx, sy);
+                p[5] = p[5] * sy;
+                p[6] = p[6] * sy;
+            });
+            drawAlternate();
+        }
+
+        return true;
+    }
+
+    function updateURL() {
+        var hash = '';
+        if (pPaths.length > 0) {
+            var data = {
+                w: scoreW,
+                h: scoreH,
+                p: players,
+                d: duration,
+                s: steps,
+                si: sine,
+                sq: square,
+                tr: triangle,
+                sp: splitView,
+                sw: parseInt(document.getElementById('stroke-width').value),
+                paths: pPaths
+            };
+            hash = '#' + btoa(JSON.stringify(data)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+        try {
+            history.replaceState(null, '', location.pathname + location.search + hash);
+        } catch (e) {
+            location.hash = hash;
+        }
+    }
+
+    function restoreFromURL() {
+        if (location.hash.length < 2) return false;
+
+        var data;
+        try {
+            var b64 = location.hash.slice(1).replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            data = JSON.parse(atob(b64));
+        } catch (e) {
+            return false;
+        }
+        if (!data || !data.p || !data.d || !data.s || !data.w || !data.h || !Array.isArray(data.paths) || data.paths.length === 0) {
+            return false;
+        }
+
+        players = data.p;
+        document.getElementById('players').value = players;
+        duration = data.d;
+        document.getElementById('duration').value = duration;
+        steps = data.s;
+        document.getElementById('max-steps').value = steps;
+        sine = !!data.si;
+        square = !!data.sq;
+        triangle = !!data.tr;
+        document.getElementById('sine').checked = sine;
+        document.getElementById('square').checked = square;
+        document.getElementById('triangle').checked = triangle;
+        splitView = !!data.sp;
+        document.getElementById('split').checked = splitView;
+        document.getElementById('overlay').classList.toggle('hidden', !splitView);
+        if (data.sw) {
+            document.getElementById('stroke-width').value = data.sw;
+            document.documentElement.style.setProperty('--stroke-width', data.sw);
+        }
+
+        const legend_elements = document.querySelectorAll(".legend-element");
+        for (let i = 0; i < legend_elements.length; i++) {
+            i < players ? legend_elements[i].classList.remove("hidden") : legend_elements[i].classList.add("hidden");
+        }
+        const overlay_elements = document.querySelectorAll(".player-overlay");
+        for (let i = 0; i < overlay_elements.length; i++) {
+            i < players ? overlay_elements[i].classList.remove("hidden") : overlay_elements[i].classList.add("hidden");
+        }
+
+        pPaths = data.paths;
+        scoreW = data.w;
+        scoreH = data.h;
+        rescaleScore(document.getElementById('score').offsetWidth, document.getElementById('score').offsetHeight);
+
+        player = players;
+        starting_player = getRandomInt(0, players);
+        initPlay();
+        animReady = 1;
+        toggleFormElements(true);
+        document.getElementById('draw-score').disabled = true;
+        document.getElementById('stop-score').disabled = true;
+
+        return true;
     }
 
     function scalePath(d, sx, sy) {
@@ -514,6 +624,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
         splitView = document.getElementById("split").checked;
         document.getElementById("overlay").classList.toggle("hidden");
         drawAlternate();
+        updateURL();
         // console.log("Split View: " + splitView);
     });
 
@@ -522,29 +633,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
     window.addEventListener("resize", function() {
         clearTimeout( resizeTimer );
         resizeTimer = setTimeout( function() {
-            var newW = document.getElementById('score').offsetWidth;
-            var newH = document.getElementById('score').offsetHeight;
-            if (!newW || !newH || !scoreW || !scoreH) return;
-
-            var sx = newW / scoreW;
-            var sy = newH / scoreH;
-            scoreW = newW;
-            scoreH = newH;
-            document.getElementById("score-svg").setAttribute("viewBox", "0 0 " + scoreW + " " + scoreH);
-            step = scoreW / (steps + 2);
-            timeStep = (scoreW - 2 * step) / duration;
-
-            if (pPaths.length > 0) {
-                pPaths.forEach(function(p) {
-                    p[2] = scalePath(p[2], sx, sy);
-                    p[3] = scalePath(p[3], sx, sy);
-                    p[5] = p[5] * sy;
-                });
-                drawAlternate();
-            }
-
-            // Re-sync the mask animation to the new width, keeping its progress
-            if (animReady) {
+            if (rescaleScore(document.getElementById('score').offsetWidth, document.getElementById('score').offsetHeight) && animReady) {
                 var progress = mask.currentTime / a_duration;
                 mask.cancel();
                 initPlay();
@@ -577,9 +666,12 @@ SVG.on(document, 'DOMContentLoaded', function() {
 
     document.getElementById("stroke-width").addEventListener("change", (event) => {
         document.documentElement.style.setProperty('--stroke-width', parseInt(event.target.value));
+        updateURL();
     });
 
     document.getElementById("dark-mode").addEventListener("click", (event) => {
         document.body.classList.toggle("dark-mode");
     });
+
+    restoreFromURL();
 })
