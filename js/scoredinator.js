@@ -23,9 +23,10 @@ SVG.on(document, 'DOMContentLoaded', function() {
 
     // Animation vars
     var a_duration = 0;
-    var mask = '';
+    var mask = null;
     var isPlaying = 0;
     var animReady = 0;
+    var redrawCounter = 0;
     
     // SVG container definition
     var draw = SVG().addTo('#score').size('100%', '100%').viewbox('0 0 '+ scoreW + ' ' + scoreH).attr({preserveAspectRatio: 'xMinYMid slice', id: 'score-svg'});
@@ -240,9 +241,10 @@ SVG.on(document, 'DOMContentLoaded', function() {
         // Re Draw the path from saved data
         if( pPaths.length > 0 ) {
             draw.clear();
+            clearInterval( redrawCounter );
 
             var nPath = 0;
-            var counter = setInterval( function() {
+            redrawCounter = setInterval( function() {
                 let startOffset = (pPaths[nPath][0]+1) * 9;
                 let sPoint = draw.circle(16);
                 sPoint.move((pPaths[nPath][1] * step - 8 ), startOffset + 16);
@@ -261,7 +263,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
                 path.stroke({ linecap: 'round', linejoin: 'round' });
                 nPath++;
                 if( nPath == pPaths.length) {
-                    clearInterval( counter );
+                    clearInterval( redrawCounter );
                 }
 
             }, 80);
@@ -327,6 +329,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
 
     function clearScore() {
         draw.clear();
+        clearInterval( redrawCounter );
         player = 0;
         starting_player = getRandomInt(0, players);
         draw_more = 0;
@@ -488,28 +491,15 @@ SVG.on(document, 'DOMContentLoaded', function() {
         steps = parseInt(document.getElementById('max-steps').value);
     });
 
-    document.getElementById("sine").addEventListener("change", (event) => {
-        if(!document.getElementById("triangle").checked && !document.getElementById("square").checked ) {
-            document.getElementById("sine").checked = true;
-        }
-        sine = document.getElementById("sine").checked;
-        console.log("Sine: " + sine);
-    });
-
-    document.getElementById("square").addEventListener("change", (event) => {
-        if(!document.getElementById("triangle").checked && !document.getElementById("sine").checked ) {
-            document.getElementById("square").checked = true;
-        }
-        square = document.getElementById("square").checked;
-        console.log("Square: " + square);
-    });
-
-    document.getElementById("triangle").addEventListener("change", (event) => {
-        if(!document.getElementById("square").checked && !document.getElementById("sine").checked ) {
-            document.getElementById("triangle").checked = true;
-        }
-        triangle = document.getElementById("triangle").checked;
-        console.log("Triangle: " + triangle);
+    ["sine", "square", "triangle"].forEach(function(name) {
+        document.getElementById(name).addEventListener("change", (event) => {
+            if( !document.getElementById("sine").checked && !document.getElementById("square").checked && !document.getElementById("triangle").checked ) {
+                document.getElementById(name).checked = true;
+            }
+            sine = document.getElementById("sine").checked;
+            square = document.getElementById("square").checked;
+            triangle = document.getElementById("triangle").checked;
+        });
     });
 
     document.getElementById("split").addEventListener("change", (event) => {
@@ -529,47 +519,23 @@ SVG.on(document, 'DOMContentLoaded', function() {
     }
 
     // Hide and show paths
-    document.getElementById("player-1").addEventListener("mouseover",(event) => {
-        let paths = document.querySelectorAll("#path-2, #spoint-2, #path-3, #spoint-3, #path-4, #spoint-4, #path-5, #spoint-5, #path-6, #spoint-6");
-        for (let i = 0; i < paths.length; i++) {
-            paths[i].classList.add("faded");
-        }
-    });
+    for (let i = 1; i <= 6; i++) {
+        document.getElementById("player-" + i).addEventListener("mouseover", (event) => {
+            let paths = document.querySelectorAll("[id^=path-], [id^=spoint-]");
+            for (let j = 0; j < paths.length; j++) {
+                if (!paths[j].id.endsWith("-" + i)) {
+                    paths[j].classList.add("faded");
+                }
+            }
+        });
 
-    document.getElementById("player-2").addEventListener("mouseover",(event) => {
-        let paths = document.querySelectorAll("#path-1, #spoint-1, #path-3, #spoint-3, #path-4, #spoint-4, #path-5, #spoint-5, #path-6, #spoint-6");
-        for (let i = 0; i < paths.length; i++) {
-            paths[i].classList.add("faded");
-        }
-    });
-
-    document.getElementById("player-3").addEventListener("mouseover",(event) => {
-        let paths = document.querySelectorAll("#path-1, #spoint-1, #path-2, #spoint-2, #path-4, #spoint-4, #path-5, #spoint-5, #path-6, #spoint-6");
-        for (let i = 0; i < paths.length; i++) {
-            paths[i].classList.add("faded");
-        }
-    });
-
-    document.getElementById("player-4").addEventListener("mouseover",(event) => {
-        let paths = document.querySelectorAll("#path-1, #spoint-1, #path-2, #spoint-2, #path-3, #spoint-3, #path-5, #spoint-5, #path-6, #spoint-6");
-        for (let i = 0; i < paths.length; i++) {
-            paths[i].classList.add("faded");
-        }
-    });
-
-    document.getElementById("player-5").addEventListener("mouseover",(event) => {
-        let paths = document.querySelectorAll("#path-1, #spoint-1, #path-2, #spoint-2, #path-3, #spoint-3, #path-4, #spoint-4, #path-6, #spoint-6");
-        for (let i = 0; i < paths.length; i++) {
-            paths[i].classList.add("faded");
-        }
-    });
-
-    document.getElementById("player-6").addEventListener("mouseover",(event) => {
-        let paths = document.querySelectorAll("#path-1, #spoint-1, #path-2, #spoint-2, #path-3, #spoint-3, #path-4, #spoint-4, #path-5, #spoint-5");
-        for (let i = 0; i < paths.length; i++) {
-            paths[i].classList.add("faded");
-        }
-    });
+        document.getElementById("player-" + i).addEventListener("mouseout", (event) => {
+            let paths = document.querySelectorAll("[id^=path-], [id^=spoint-]");
+            for (let j = 0; j < paths.length; j++) {
+                paths[j].classList.remove("faded");
+            }
+        });
+    }
 
     document.getElementById("stroke-width").addEventListener("change", (event) => {
         document.documentElement.style.setProperty('--stroke-width', parseInt(event.target.value));
@@ -578,14 +544,4 @@ SVG.on(document, 'DOMContentLoaded', function() {
     document.getElementById("dark-mode").addEventListener("click", (event) => {
         document.body.classList.toggle("dark-mode");
     });
-
-    let toggles = document.querySelectorAll("[id^=player-]");
-    for (let i = 0; i < toggles.length; i++) {
-        toggles[i].addEventListener("mouseout",(event) => {
-            let paths = document.querySelectorAll("[id^=path-], [id^=spoint-]");
-            for (let i = 0; i < paths.length; i++) {
-                paths[i].classList.remove("faded");
-            }
-        });
-    };
 })
