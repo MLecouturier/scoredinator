@@ -432,22 +432,67 @@ body.dark-mode {
 }
 
 @media print {
-    html, body {
-        width: 297mm;
-        height: 210mm;
-        position: relative;
+    $print-margin: 12mm;
+
+    @page {
+        size: A4 landscape;
+        margin: $print-margin;
     }
-    
-    #score {
-        width: 100%;
-        height: 100%;
-        
-        svg {
-            max-width: 100%;
+
+    html, body {
+        width: 297mm - (2 * $print-margin);
+        height: 210mm - (2 * $print-margin);
+        position: relative;
+        background: white;
+    }
+
+    body.dark-mode {
+        background-color: white;
+        color: black;
+
+        text {
+            stroke: none;
+        }
+
+        main #legend {
+            background-color: whitesmoke;
+        }
+
+        path,
+        circle,
+        polygon {
+            mix-blend-mode: multiply;
         }
     }
 
+    header,
     footer {
         display: none;
+    }
+
+    main {
+        overflow: visible;
+
+        #score {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+
+            svg {
+                max-width: 100%;
+            }
+        }
+
+        #mask,
+        #countdown,
+        #overlay {
+            display: none !important;
+        }
+
+        #legend {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+            background-color: whitesmoke;
+        }
     }
 }

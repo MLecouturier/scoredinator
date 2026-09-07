@@ -29,6 +29,8 @@
 }
 
 * {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 
@@ -198,9 +200,6 @@ main #legend .legend-element input {
   font-size: 0.8rem;
   font-weight: bold;
   background: transparent;
-}
-main #legend .legend-element input::-moz-placeholder {
-  color: gainsboro;
 }
 main #legend .legend-element input::placeholder {
   color: gainsboro;
@@ -376,19 +375,56 @@ body.dark-mode text {
 }
 
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
   html, body {
-    width: 297mm;
-    height: 210mm;
+    width: 273mm;
+    height: 186mm;
     position: relative;
+    background: white;
   }
-  #score {
-    width: 100%;
-    height: 100%;
+  body.dark-mode {
+    background-color: white;
+    color: black;
   }
-  #score svg {
-    max-width: 100%;
+  body.dark-mode text {
+    stroke: none;
   }
+  body.dark-mode main #legend {
+    background-color: whitesmoke;
+  }
+  body.dark-mode path,
+  body.dark-mode circle,
+  body.dark-mode polygon {
+    mix-blend-mode: multiply;
+  }
+  header,
   footer {
     display: none;
   }
-}/*# sourceMappingURL=custom.css.map */
+  main {
+    overflow: visible;
+  }
+  main #score {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+  }
+  main #score svg {
+    max-width: 100%;
+  }
+  main #mask,
+  main #countdown,
+  main #overlay {
+    display: none !important;
+  }
+  main #legend {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    background-color: whitesmoke;
+  }
+}
+
+/*# sourceMappingURL=custom.css.map */

@@ -230,14 +230,13 @@ SVG.on(document, 'DOMContentLoaded', function() {
         }
     } 
 
-    function drawAlternate() {
+    function drawAlternate(sync = false) {
         // Re Draw the path from saved data
         if( pPaths.length > 0 ) {
             draw.clear();
             clearInterval( redrawCounter );
 
-            var nPath = 0;
-            redrawCounter = setInterval( function() {
+            var drawPath = function(nPath) {
                 let sPoint = draw.circle(16);
                 sPoint.move((pPaths[nPath][1] * step - 8 ), pPaths[nPath][6] - 16);
                 sPoint.attr('id', 'spoint-' + (pPaths[nPath][0]+1));
@@ -253,36 +252,29 @@ SVG.on(document, 'DOMContentLoaded', function() {
                 path.attr('id', 'path-' + (pPaths[nPath][0]+1));
                 path.fill('none');
                 path.stroke({ linecap: 'round', linejoin: 'round' });
-                nPath++;
-                if( nPath == pPaths.length) {
-                    clearInterval( redrawCounter );
-                }
+            };
 
-            }, 80);
+            if (sync) {
+                for (var i = 0; i < pPaths.length; i++) {
+                    drawPath(i);
+                }
+            } else {
+                var nPath = 0;
+                redrawCounter = setInterval( function() {
+                    drawPath(nPath);
+                    nPath++;
+                    if( nPath == pPaths.length) {
+                        clearInterval( redrawCounter );
+                    }
+                }, 80);
+            }
 
             // Add legend
             drawLegend();
             legend = true;
-        
-
-            // pPaths.forEach( p => {
-            //     let startOffset = (p[0]+1) * 9;
-            //     let sPoint = draw.circle(16);
-            //     sPoint.move((p[1] * step - 8 ), startOffset + 16);
-            //     sPoint.attr('id', 'spoint-' + (p[0]+1));
-            //     let path = '';
-            //     if( splitView ) {
-            //         path = draw.path(p[3]);
-            //     } else {
-            //         path = draw.path(p[2]);
-            //     }
-            //     path.attr('id', 'path-' + (p[0]+1));
-            //     path.fill('none');
-            //     path.stroke({ linecap: 'round', linejoin: 'round' });
-            // });
         }
     }
-    
+
     function initPlay() {
         // Set up Animation
         // a_duration = (duration + duration/steps) * 1000;// For Testing
@@ -365,7 +357,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
         }
     }
 
-    function rescaleScore(newW, newH) {
+    function rescaleScore(newW, newH, sync = false) {
         if (!newW || !newH || !scoreW || !scoreH) return false;
 
         var sx = newW / scoreW;
@@ -383,7 +375,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
                 p[5] = p[5] * sy;
                 p[6] = p[6] * sy;
             });
-            drawAlternate();
+            drawAlternate(sync);
         }
 
         return true;
@@ -573,6 +565,25 @@ SVG.on(document, 'DOMContentLoaded', function() {
             initPlay();
         }
     };
+
+    // Rescale the score to the printable area ratio (A4 landscape, 12mm page margins) on native print
+    var printRestoreW = 0;
+    var printRestoreH = 0;
+
+    window.addEventListener("beforeprint", function() {
+        if (pPaths.length === 0) return;
+        printRestoreW = scoreW;
+        printRestoreH = scoreH;
+        rescaleScore(scoreW, scoreW * 186 / 273, true);
+    });
+
+    window.addEventListener("afterprint", function() {
+        if (printRestoreW && printRestoreH) {
+            rescaleScore(printRestoreW, printRestoreH, true);
+            printRestoreW = 0;
+            printRestoreH = 0;
+        }
+    });
     
     document.getElementById("pick-duration").onclick = function() {  
         pickDuration();

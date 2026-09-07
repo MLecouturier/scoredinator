@@ -16,6 +16,7 @@ Open `index.html` in a modern browser (or serve the folder with any static web s
 4. Click **Play** to start the performance: after a short countdown, the mask moves across the score for the whole duration of the piece. **Rewind** resets the mask to the beginning.
 5. **Split** switches to a split view with one lane per player.
 6. The `–` slider adjusts the stroke width, the moon icon toggles dark mode.
+7. Print with the browser's native command (Ctrl+P / Cmd+P): the score is automatically rescaled to A4 landscape with a 12 mm margin (a single page, header and controls hidden). The on-screen layout is restored after printing.
 
 The score is fully responsive: resizing the window rescales the drawing and the timeline.
 
