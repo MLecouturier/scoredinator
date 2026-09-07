@@ -308,6 +308,10 @@ footer {
         button[id$="-score"] {
             min-width: 4rem;
             text-transform: uppercase;
+
+            &#export-score {
+                min-width: auto;
+            }
         }
     }
 }

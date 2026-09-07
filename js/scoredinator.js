@@ -299,6 +299,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
             document.getElementById('play-score').innerHTML = 'Play';
         };
         document.getElementById('play-score').disabled = false;
+        document.getElementById('export-score').disabled = false;
     }
 
     function clearScore() {
@@ -317,6 +318,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
         updateURL();
         document.getElementById('play-score').innerHTML = 'Play';
         document.getElementById('play-score').disabled = true;
+        document.getElementById('export-score').disabled = true;
         document.getElementById('draw-score').disabled = false;
         toggleFormElements(false);
     }
@@ -584,6 +586,94 @@ SVG.on(document, 'DOMContentLoaded', function() {
             printRestoreH = 0;
         }
     });
+
+    function exportSVG() {
+        var liveSvg = document.getElementById('score-svg');
+        if (!liveSvg || pPaths.length === 0) return;
+
+        var xmlns = 'http://www.w3.org/2000/svg';
+        var clone = liveSvg.cloneNode(true);
+        clone.setAttribute('xmlns', xmlns);
+        clone.setAttribute('width', scoreW);
+        clone.setAttribute('height', scoreH);
+
+        // White background so the exported file is self-contained
+        var bg = document.createElementNS(xmlns, 'rect');
+        bg.setAttribute('x', '0');
+        bg.setAttribute('y', '0');
+        bg.setAttribute('width', '100%');
+        bg.setAttribute('height', '100%');
+        bg.setAttribute('fill', 'white');
+        clone.insertBefore(bg, clone.firstChild);
+
+        // Inline the styles normally provided by the page CSS
+        var liveNodes = liveSvg.querySelectorAll('path, circle, polygon, text');
+        var cloneNodes = clone.querySelectorAll('path, circle, polygon, text');
+        for (var i = 0; i < liveNodes.length; i++) {
+            var c = window.getComputedStyle(liveNodes[i]);
+            var n = cloneNodes[i];
+            n.classList.remove('faded');
+            if (n.tagName == 'text') {
+                n.setAttribute('fill', 'black');
+                n.setAttribute('font-family', 'monospace');
+                n.setAttribute('font-size', '16');
+            } else if (n.tagName == 'path') {
+                n.setAttribute('stroke', c.stroke);
+                n.setAttribute('stroke-width', parseFloat(c.strokeWidth));
+                n.setAttribute('fill', 'none');
+            } else {
+                n.setAttribute('fill', c.fill);
+                n.setAttribute('stroke', 'none');
+            }
+        }
+
+        // Player legend (colors and names), top right
+        var sw = parseInt(document.getElementById('stroke-width').value);
+        var inputs = document.querySelectorAll('#legend .legend-element input');
+        var legend = document.createElementNS(xmlns, 'g');
+        var lx = scoreW - 160;
+        for (var p = 1; p <= players; p++) {
+            var color = '#000';
+            var pathEl = document.getElementById('path-' + p);
+            if (pathEl) {
+                color = window.getComputedStyle(pathEl).stroke;
+            }
+            var y = 44 + (p - 1) * 18;
+            var line = document.createElementNS(xmlns, 'line');
+            line.setAttribute('x1', lx);
+            line.setAttribute('y1', y - 5);
+            line.setAttribute('x2', lx + 36);
+            line.setAttribute('y2', y - 5);
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', sw);
+            legend.appendChild(line);
+            var label = document.createElementNS(xmlns, 'text');
+            label.setAttribute('x', lx + 44);
+            label.setAttribute('y', y);
+            label.setAttribute('fill', 'black');
+            label.setAttribute('font-family', 'monospace');
+            label.setAttribute('font-size', '16');
+            label.textContent = p + ' ' + (inputs[p - 1] ? inputs[p - 1].value : '');
+            legend.appendChild(label);
+        }
+        clone.appendChild(legend);
+
+        // Download
+        var source = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
+        var blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'scoredinator.svg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("export-score").onclick = function() {
+        exportSVG();
+    };
     
     document.getElementById("pick-duration").onclick = function() {  
         pickDuration();

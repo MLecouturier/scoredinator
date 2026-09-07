@@ -276,6 +276,9 @@ footer .form-element button[id$=-score] {
   min-width: 4rem;
   text-transform: uppercase;
 }
+footer .form-element button[id$=-score]#export-score {
+  min-width: auto;
+}
 
 svg {
   font-size: 1rem;
