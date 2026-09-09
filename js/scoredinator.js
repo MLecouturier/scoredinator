@@ -686,8 +686,8 @@ SVG.on(document, 'DOMContentLoaded', function() {
 
     document.getElementById("players").addEventListener("change", (event) => {
         players = parseInt(document.getElementById('players').value);
-        starting_player = getRandomInt(1, players + 1);
-        console.log("Starting Player:" + starting_player);
+        starting_player = getRandomInt(0, players);
+        console.log("Starting Player:" + (starting_player + 1));
 
         const legend_elements = document.querySelectorAll(".legend-element");
         for (var i = 0; i < legend_elements.length; i++) {
