@@ -27,6 +27,30 @@ SVG.on(document, 'DOMContentLoaded', function() {
     var isPlaying = 0;
     var animReady = 0;
     var redrawCounter = 0;
+    var lockedPlayer = 0;
+
+    // Idle demo vars
+    var DEMO_FIRST_DELAY = 10000;
+    var DEMO_REPEAT_DELAY = 30000;
+    var idleTimer = 0;
+    var dotInterval = 0;
+    var autoRunning = false;
+
+    // International first names (50 male / 50 female)
+    var MALE_NAMES = [
+        "Aaron", "Adam", "Adrian", "Ahmed", "Alejandro", "André", "Antoine", "Arthur", "Benjamin", "Carlos",
+        "Daniel", "David", "Diego", "Dmitri", "Elias", "Emeka", "Erik", "Étienne", "Félix", "Gabriel",
+        "Georges", "Hassan", "Hiroshi", "Hugo", "Ibrahim", "Isaac", "Ivan", "Jacques", "James", "Javier",
+        "Jonas", "Karim", "Kwame", "Lars", "Léo", "Lucas", "Malik", "Marco", "Mateo", "Matthias",
+        "Mehdi", "Miguel", "Nathan", "Nikola", "Olivier", "Omar", "Pablo", "Pierre", "Rafael", "Samuel"
+    ];
+    var FEMALE_NAMES = [
+        "Aïcha", "Alice", "Amara", "Amelia", "Ana", "Anna", "Aya", "Beatriz", "Camille", "Carla",
+        "Charlotte", "Chloé", "Clara", "Daniela", "Elena", "Elif", "Élodie", "Emma", "Fatima", "Giulia",
+        "Grace", "Hana", "Hanna", "Inès", "Isabella", "Jade", "Jeanne", "Julia", "Kaori", "Klara",
+        "Laura", "Leila", "Lena", "Lucía", "Léa", "Maeva", "Manon", "Maria", "Marta", "Mei",
+        "Nadia", "Nina", "Noor", "Olivia", "Priya", "Sara", "Sofia", "Thaïs", "Yuki", "Zara"
+    ];
     
     // SVG container definition
     var draw = SVG().addTo('#score').size('100%', '100%').viewbox('0 0 '+ scoreW + ' ' + scoreH).attr({preserveAspectRatio: 'xMinYMid slice', id: 'score-svg'});
@@ -207,6 +231,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
         let pP = [player-1, starting_point, points, aPoints, exit_point, exit_y, startOffset + 32];
         pPaths.push(pP);
         updateURL();
+        updateHighlight();
 
         // Add legend
         if (!legend) {
@@ -215,11 +240,11 @@ SVG.on(document, 'DOMContentLoaded', function() {
         } 
         
         // Evaluate if it's possible to draw more path
-        if ( (steps - exit_point + 1) >= steps / 3) {
+        if ( (steps - exit_point + 1) >= steps / 3 && (exit_point + 1) <= (steps - 1) ) {
             // Stay on the same player
             player--;
-            // Pick next starting point
-            draw_more = getRandomInt(exit_point+1, steps - 1);
+            // Pick next starting point, strictly after the exit step
+            draw_more = getRandomInt(exit_point + 1, steps - 1);
         } else {
             draw_more = 0;
         }
@@ -258,10 +283,12 @@ SVG.on(document, 'DOMContentLoaded', function() {
                 for (var i = 0; i < pPaths.length; i++) {
                     drawPath(i);
                 }
+                updateHighlight();
             } else {
                 var nPath = 0;
                 redrawCounter = setInterval( function() {
                     drawPath(nPath);
+                    updateHighlight();
                     nPath++;
                     if( nPath == pPaths.length) {
                         clearInterval( redrawCounter );
@@ -314,6 +341,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
         animReady = 0;
         isPlaying = 0;
         legend = false;
+        lockedPlayer = 0;
         pPaths = [];
         updateURL();
         document.getElementById('play-score').innerHTML = 'Play';
@@ -484,6 +512,7 @@ SVG.on(document, 'DOMContentLoaded', function() {
     function getRandomInt(min, max) {
         min = Math.ceil(min);
         max = Math.floor(max);
+        if (max <= min) return min;
         return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
     }
 
@@ -747,20 +776,45 @@ SVG.on(document, 'DOMContentLoaded', function() {
     });
 
     // Hide and show paths
+    function clearFade() {
+        document.querySelectorAll("[id^=path-], [id^=spoint-], [id^=epoint-]").forEach(function (el) {
+            el.classList.remove("faded");
+        });
+    }
+
+    function fadeOthers(exceptId) {
+        clearFade();
+        document.querySelectorAll("[id^=path-], [id^=spoint-], [id^=epoint-]").forEach(function (el) {
+            if (!el.id.endsWith("-" + exceptId)) {
+                el.classList.add("faded");
+            }
+        });
+    }
+
+    function updateHighlight() {
+        lockedPlayer ? fadeOthers(lockedPlayer) : clearFade();
+    }
+
     for (let i = 1; i <= 6; i++) {
         document.getElementById("player-" + i).addEventListener("mouseover", (event) => {
-            let paths = document.querySelectorAll("[id^=path-], [id^=spoint-]");
-            for (let j = 0; j < paths.length; j++) {
-                if (!paths[j].id.endsWith("-" + i)) {
-                    paths[j].classList.add("faded");
-                }
+            if (!lockedPlayer) {
+                fadeOthers(i);
             }
         });
 
         document.getElementById("player-" + i).addEventListener("mouseout", (event) => {
-            let paths = document.querySelectorAll("[id^=path-], [id^=spoint-]");
-            for (let j = 0; j < paths.length; j++) {
-                paths[j].classList.remove("faded");
+            if (!lockedPlayer) {
+                clearFade();
+            }
+        });
+
+        document.getElementById("player-" + i).addEventListener("click", (event) => {
+            if (lockedPlayer === i) {
+                lockedPlayer = 0;
+                clearFade();
+            } else {
+                lockedPlayer = i;
+                fadeOthers(i);
             }
         });
     }
@@ -774,5 +828,142 @@ SVG.on(document, 'DOMContentLoaded', function() {
         document.body.classList.toggle("dark-mode");
     });
 
-    restoreFromURL();
+    function sleep(ms) {
+        return new Promise(function(resolve) {
+            setTimeout(resolve, ms);
+        });
+    }
+
+    function pickRandomNames(count) {
+        var pool = MALE_NAMES.concat(FEMALE_NAMES);
+        for (var i = pool.length - 1; i > 0; i--) {
+            var j = getRandomInt(0, i + 1);
+            var tmp = pool[i];
+            pool[i] = pool[j];
+            pool[j] = tmp;
+        }
+        return pool.slice(0, count);
+    }
+
+    function renderDots(count) {
+        document.getElementById('demo-dots').textContent = count > 0 ? '.'.repeat(count) : '';
+    }
+
+    function cancelIdleTimer() {
+        if (idleTimer) {
+            clearTimeout(idleTimer);
+            idleTimer = 0;
+        }
+        if (dotInterval) {
+            clearInterval(dotInterval);
+            dotInterval = 0;
+        }
+    }
+
+    function startIdleCountdown(delay, callback) {
+        cancelIdleTimer();
+        var total = 10;
+        renderDots(total);
+        dotInterval = setInterval(function() {
+            total--;
+            renderDots(total);
+            if (total <= 0) {
+                clearInterval(dotInterval);
+                dotInterval = 0;
+            }
+        }, delay / 10);
+        idleTimer = setTimeout(callback, delay);
+    }
+
+    function stopDemoMode() {
+        autoRunning = false;
+        cancelIdleTimer();
+        renderDots(0);
+    }
+
+    async function autoGenerate() {
+        idleTimer = 0;
+        autoRunning = true;
+        var delay = { setting: 600, name: 350, path: 700 };
+
+        // Random duration and steps
+        document.getElementById('pick-duration').click();
+        await sleep(delay.setting);
+        if (!autoRunning) return;
+        document.getElementById('pick-steps').click();
+        await sleep(delay.setting);
+        if (!autoRunning) return;
+
+        // Random number of players (minimum two)
+        players = getRandomInt(2, 7);
+        document.getElementById('players').value = players;
+        document.getElementById('players').dispatchEvent(new Event('change'));
+        await sleep(delay.setting);
+        if (!autoRunning) return;
+
+        // Random player names, filled one by one
+        var names = pickRandomNames(players);
+        var inputs = document.querySelectorAll('#legend .legend-element input');
+        for (var i = 0; i < players; i++) {
+            inputs[i].value = names[i];
+            await sleep(delay.name);
+            if (!autoRunning) return;
+        }
+
+        // Random waveforms, keeping at least one enabled
+        var waveforms = ["sine", "square", "triangle"];
+        var picked = false;
+        for (var w = 0; w < waveforms.length; w++) {
+            var on = Math.random() < 0.5;
+            document.getElementById(waveforms[w]).checked = on;
+            if (on) picked = true;
+            await sleep(delay.name);
+            if (!autoRunning) return;
+        }
+        if (!picked) {
+            document.getElementById(waveforms[getRandomInt(0, 3)]).checked = true;
+            await sleep(delay.name);
+            if (!autoRunning) return;
+        }
+        sine = document.getElementById("sine").checked;
+        square = document.getElementById("square").checked;
+        triangle = document.getElementById("triangle").checked;
+
+        // Draw the whole score, path by path
+        var drawBtn = document.getElementById('draw-score');
+        while (!drawBtn.disabled) {
+            drawBtn.click();
+            await sleep(delay.path);
+            if (!autoRunning) return;
+        }
+
+        scheduleNextDemo();
+    }
+
+    function scheduleNextDemo() {
+        if (!autoRunning) return;
+        startIdleCountdown(DEMO_REPEAT_DELAY, function() {
+            if (!autoRunning) return;
+            clearScore();
+            autoGenerate();
+        });
+    }
+
+    function onUserInteraction(event) {
+        if (!event.isTrusted) return;
+        stopDemoMode();
+    }
+
+    var interactiveControls = document.querySelectorAll('input, button, #dark-mode, [id^=player-]');
+    for (var c = 0; c < interactiveControls.length; c++) {
+        interactiveControls[c].addEventListener('click', onUserInteraction);
+        interactiveControls[c].addEventListener('input', onUserInteraction);
+        interactiveControls[c].addEventListener('change', onUserInteraction);
+        interactiveControls[c].addEventListener('keydown', onUserInteraction);
+        interactiveControls[c].addEventListener('focusin', onUserInteraction);
+    }
+
+    if (!restoreFromURL()) {
+        startIdleCountdown(DEMO_FIRST_DELAY, autoGenerate);
+    }
 })

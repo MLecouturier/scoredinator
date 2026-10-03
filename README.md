@@ -16,10 +16,17 @@ Open `index.html` in a modern browser (or serve the folder with any static web s
 4. Click **Play** to start the performance: after a short countdown, the mask moves across the score for the whole duration of the piece. **Rewind** resets the mask to the beginning.
 5. **Split** switches to a split view with one lane per player.
 6. The `–` slider adjusts the stroke width, the moon icon toggles dark mode.
-7. Print with the browser's native command (Ctrl+P / Cmd+P): the score is automatically rescaled to A4 landscape with a 12 mm margin (a single page, header and controls hidden). The on-screen layout is restored after printing.
-8. **SVG** downloads the score as a standalone `.svg` file (colors and styles inlined, player legend included).
+7. Hover a player number in the legend to highlight that player's path; click it to lock the highlight until you click it again.
+8. Print with the browser's native command (Ctrl+P / Cmd+P): the score is automatically rescaled to A4 landscape with a 12 mm margin (a single page, header and controls hidden). The on-screen layout is restored after printing.
+9. **SVG** downloads the score as a standalone `.svg` file (colors and styles inlined, player legend included).
 
 The score is fully responsive: resizing the window rescales the drawing and the timeline.
+
+### Idle demo
+
+When the page is opened without a score (no shared URL), a short demo starts automatically after 10 seconds of inactivity: it randomizes the duration, steps, number of players (at least two) and enabled waveforms (keeping at least one), fills in random player names and draws the whole score step by step. As long as the visitor does not interact, a new demo is generated every 30 seconds: the score is cleared and the process starts again.
+
+The remaining time before the next demo is shown next to the version number as a row of dots: 10 dots at load (one disappears each second), then 10 dots after each demo (one disappears every 3 seconds). The first interaction with any control cancels the timer, interrupts a running demo and erases the dots for good.
 
 ### Share a score
 

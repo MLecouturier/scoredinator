@@ -260,7 +260,7 @@ footer {
   padding: 1rem;
   border-top: 2px solid red;
   display: flex;
-  justify-content: center;
+  justify-content: fl;
   z-index: 2;
 }
 footer .form-element {
@@ -278,6 +278,16 @@ footer .form-element button[id$=-score] {
 }
 footer .form-element button[id$=-score]#export-score {
   min-width: auto;
+}
+footer .form-element.github {
+  flex-grow: 1;
+  text-align: right;
+}
+footer .form-element.github .github-link {
+  display: block;
+}
+footer .form-element.github svg {
+  height: 1rem;
 }
 
 svg {
@@ -428,6 +438,4 @@ body.dark-mode text {
     -webkit-print-color-adjust: exact;
     background-color: whitesmoke;
   }
-}
-
-/*# sourceMappingURL=custom.css.map */
+}/*# sourceMappingURL=custom.css.map */

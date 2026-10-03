@@ -291,7 +291,7 @@ footer {
     padding: 1rem;
     border-top: 2px solid red;
     display: flex;
-    justify-content: center;
+    justify-content: fl;
     z-index: 2;
 
     .form-element {
@@ -311,6 +311,19 @@ footer {
 
             &#export-score {
                 min-width: auto;
+            }
+        }
+
+        &.github {
+            flex-grow: 1;
+            text-align: right;
+
+            .github-link {
+                display: block;
+            }
+            
+            svg {
+                height: 1rem;
             }
         }
     }
