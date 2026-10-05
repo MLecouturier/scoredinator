@@ -42,7 +42,7 @@ Plain HTML/CSS/JS, using [SVG.js](https://svgdotjs.github.io/) for drawing and t
 
 ## Credits & License
 
-This project is based on an original idea from [Jonathan Poliart](https://jonathanpoliart.net) / [martiengohome](https://martiensgohome.bandcamp.com/).
+This project is based on an original idea from [Jonathan Poliart](https://jonathanpoliart.net) / [martiensgohome](https://mgh.constantvzw.org/).
 
 Fonts: Mouvement Direct, Not Courrier Sans.
 
